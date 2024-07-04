@@ -1,0 +1,138 @@
+import numpy as np
+import scipy.integrate as integrate
+
+# Define parameters (replace with actual ones)
+mu = 1.0
+p_u_plus = 0.5
+gamma = 0.1
+eta_plus = 0.2
+lambda_u_plus = 0.3
+J_plus = 0.4
+
+# Define the functions f(x) and g(ell), replace with actual functions
+def f(x):
+    return np.exp(-x)  # Example function
+
+def g(ell):
+    return np.sin(ell)  # Example function
+
+# Boundary conditions
+alpha_0 = (mu * p_u_plus + gamma * p_u_plus) / (mu * p_u_plus + gamma)
+beta_0 = (mu * gamma * (1 - p_u_plus) * lambda_u_plus) / ((mu * p_u_plus + gamma) ** 2) + (gamma / (mu * p_u_plus + gamma)) * J_plus
+
+# Number of discretization points
+N = 100
+q_values = np.linspace(0, 1, N)
+
+# Initial guess for alpha and beta
+alpha_values = np.full(N, alpha_0)
+beta_values = np.full(N, beta_0)
+
+# Tolerance and maximum number of iterations
+tol = 1e-6
+max_iter = 100
+
+# Iterative solver
+for iteration in range(max_iter):
+    alpha_new = np.zeros(N)
+    beta_new = np.zeros(N)
+    
+    for i, q in enumerate(q_values):
+        integral1_alpha, _ = integrate.quad(lambda x: (np.interp(q - x, q_values, alpha_values) - 1) * f(x) if q - x >= 0 else 0, 0, q)
+        integral2_alpha, _ = integrate.quad(lambda ell: np.interp(ell, q_values, alpha_values) * g(ell), 0, 1)
+        
+        alpha_new[i] = (mu / (mu * p_u_plus + gamma + eta_plus)) * (
+            p_u_plus + integral1_alpha + (gamma * p_u_plus / (mu * p_u_plus + gamma + eta_plus)) + (eta_plus / (mu * p_u_plus + gamma + eta_plus)) * integral2_alpha
+        )
+        
+        integral1_beta, _ = integrate.quad(lambda x: np.interp(q - x, q_values, beta_values) * f(x) if q - x >= 0 else 0, 0, q)
+        integral2_beta, _ = integrate.quad(lambda x: (np.interp(q - x, q_values, alpha_values) - 1) * x * f(x) if q - x >= 0 else 0, 0, q)
+        integral3_beta, _ = integrate.quad(lambda ell: np.interp(ell, q_values, beta_values) * g(ell), 0, 1)
+        
+        beta_new[i] = (mu / (mu * p_u_plus + gamma + eta_plus)) * (
+            integral1_beta + integral2_beta - lambda_u_plus * (np.interp(q, q_values, alpha_values) - 1) + (gamma * J_plus / (mu * p_u_plus + gamma + eta_plus)) + (eta_plus / (mu * p_u_plus + gamma + eta_plus)) * integral3_beta
+        )
+    
+    if np.allclose(alpha_new, alpha_values, atol=tol) and np.allclose(beta_new, beta_values, atol=tol):
+        break
+    
+    alpha_values = alpha_new
+    beta_values = beta_new
+
+# Print results
+print("Alpha values:", alpha_values)
+print("Beta values:", beta_values)
+
+
+
+
+3333333333333333333333333333333333333
+
+
+import numpy as np
+
+# Define parameters (replace with actual ones)
+mu = 1.0
+p_u_plus = 0.5
+gamma = 0.1
+eta_plus = 0.2
+lambda_u_plus = 0.3
+J_plus = 0.4
+
+# Define the functions f(x) and g(ell), replace with actual functions
+def f(x):
+    return np.exp(-x)  # Example function
+
+def g(ell):
+    return np.sin(ell)  # Example function
+
+# Boundary conditions
+alpha_0 = (mu * p_u_plus + gamma * p_u_plus) / (mu * p_u_plus + gamma)
+beta_0 = (mu * gamma * (1 - p_u_plus) * lambda_u_plus) / ((mu * p_u_plus + gamma) ** 2) + (gamma / (mu * p_u_plus + gamma)) * J_plus
+
+# Number of discretization points
+N = 100
+q_values = np.arange(0, N)
+
+# Initial guess for alpha and beta
+alpha_values = np.full(N, alpha_0)
+beta_values = np.full(N, beta_0)
+
+# Tolerance and maximum number of iterations
+tol = 1e-6
+max_iter = 100
+
+# Iterative solver
+for iteration in range(max_iter):
+    alpha_new = np.zeros(N)
+    beta_new = np.zeros(N)
+    
+    for q in range(N):
+        sum1_alpha = sum((alpha_values[q - x] - 1) * f(x) for x in range(1, q + 1))
+        sum2_alpha = sum(alpha_values[ell] * g(ell) for ell in range(N))
+        
+        alpha_new[q] = (mu / (mu * p_u_plus + gamma + eta_plus)) * (
+            p_u_plus + sum1_alpha + (gamma * p_u_plus / (mu * p_u_plus + gamma + eta_plus)) + (eta_plus / (mu * p_u_plus + gamma + eta_plus)) * sum2_alpha
+        )
+        
+        sum1_beta = sum(beta_values[q - x] * f(x) for x in range(1, q + 1))
+        sum2_beta = sum((alpha_values[q - x] - 1) * x * f(x) for x in range(1, q + 1))
+        sum3_beta = sum(beta_values[ell] * g(ell) for ell in range(N))
+        
+        beta_new[q] = (mu / (mu * p_u_plus + gamma + eta_plus)) * (
+            sum1_beta + sum2_beta - lambda_u_plus * (alpha_values[q] - 1) + (gamma * J_plus / (mu * p_u_plus + gamma + eta_plus)) + (eta_plus / (mu * p_u_plus + gamma + eta_plus)) * sum3_beta
+        )
+    
+    if np.allclose(alpha_new, alpha_values, atol=tol) and np.allclose(beta_new, beta_values, atol=tol):
+        break
+    
+    alpha_values = alpha_new
+    beta_values = beta_new
+
+# Print results
+print("Alpha values:", alpha_values)
+print("Beta values:", beta_values)
+
+
+
+
